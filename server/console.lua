@@ -1,4 +1,4 @@
-local corelib = require "coreapi"
+local corelib = require "core"
 local core = corelib()
 assert(core:boot())
 

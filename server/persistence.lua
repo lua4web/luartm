@@ -1,7 +1,7 @@
-local coreapi = --[[require "lrtm.server.coreapi"]]require "coreapi"
+local core = --[[require "lrtm.server.core"]]require "core"
 
 -- extened core with persistance
-local corepersist = coreapi:extends()
+local corepersist = core:extends()
 
 corepersist.commands[10] = "flush"
 
