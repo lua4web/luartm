@@ -6,7 +6,7 @@ local core = class()
 core.debug = true
 
 function core:__init()
-	self.newtables = {}
+	
 end
 
 -- loads table
@@ -37,7 +37,7 @@ function core:canindex(t, k)
 	end
 end
 
--- perfoms simple read
+-- perfoms read
 function core:index(t, k)
 	if self.debug then print("Indexing ", t, k) end
 	local ok, err = self:canindex(t, k)
@@ -46,16 +46,6 @@ function core:index(t, k)
 	else
 		return 1, t[k]
 	end
-end
-
--- creates new table in the context
--- returns its id
-function core:newtable()
-	if self.debug then print("Newtable") end
-	local newtable = {}
-	self.refser:save(newtable)
-	self.newtables[newtable] = true
-	return 1, self.context.n
 end
 
 -- perfoms write

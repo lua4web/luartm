@@ -6,12 +6,13 @@ local coreapi = core:extends()
 
 coreapi.commands = {
 	[1] = "index";
-	[2] = "newtable";
-	[3] = "newindex";
+	[2] = "newindex";
+	[3] = "newtable";
 }
 
 function coreapi:__init()
 	coreapi.super.__init(self)
+	self.newtables = {}
 	self.refser = refser.new{
 		doublecontext = true
 	}
@@ -84,6 +85,16 @@ function coreapi:execute(s)
 			return self:encodemsg(table.unpack(resulttuple, 1, 1 + resulttuple[1]))
 		end
 	end
+end
+
+-- creates new table in the context
+-- returns its id
+function core:newtable()
+	if self.debug then print("Newtable") end
+	local newtable = {}
+	self.refser:save(newtable)
+	self.newtables[newtable] = true
+	return 1, self.context.n
 end
 
 return coreapi
