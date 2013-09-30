@@ -6,13 +6,10 @@ local refser = require "refser"
 local ptable = class()
 
 function ptable:__init(options)
-	if not options or type(options) == "string" then
-		self.base = options or "ptable"
-	else
-		self.base = options.base or "ptable"
-		self.savesnapshots = options.savesnapshots
-		self.autoflushrate = options.autoflushrate
-	end
+	self.base = options.base or "ptable"
+	self.savesnapshots = options.savesnapshots
+	self.autoflushrate = options.autoflushrate
+	self.dontlog = options.dontlog
 	
 	self:getfilecount()
 	
@@ -49,9 +46,9 @@ end
 function ptable:setmts()
 	self.itemmt = {}
 	function self.itemmt.__newindex(t, k, v)
-		self.handler:write(self.refser:save(t, k, v), "\n")
-		
-		self.handler:flush()
+		if not self.dontlog then
+			self:rawlog(self.refser:save(t, k, v))
+		end
 		
 		rawset(t, k, v)
 		
@@ -108,7 +105,7 @@ function ptable:boot()
 			else
 				ok, t, k, v = self.refser:load(entry)
 				
-				if not ok then
+				if ok ~= 3 then
 					self.filecount = self.filecount - 1
 					return self:flush()
 				end
@@ -146,8 +143,8 @@ function ptable:open(mode)
 end
 
 function ptable:rawlog(s)
-	self:handler:write(s, "\n")
-	self:handler:flush()
+	self.handler:write(s, "\n")
+	self.handler:flush()
 end
 
 return ptable
