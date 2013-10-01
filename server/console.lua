@@ -1,6 +1,10 @@
 local socket = require "socket"
 local cl = socket.connect("127.0.0.1", 7733)
 
+local n = cl:receive()
+
+print("N = " .. n)
+
 local s, r
 repeat
 	s = io.read()

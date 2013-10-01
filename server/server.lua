@@ -30,8 +30,15 @@ function server:start()
 	copas.loop()
 end
 
+function server:handshake(skt)
+	-- send version?
+
+	skt:send(tostring(self.refser.context.n))
+	skt:send("\r\n")
+end
+
 function server:handle(skt)
-	print("Accepted connetion...")
+	print("Accepted connection...")
 	
 	local s
 	local ok, code, t, k, v
@@ -61,7 +68,7 @@ function server:handle(skt)
 		end
 	end
 	
-	print("Closed connetion.")
+	print("Closed connection.")
 end
 
 return server

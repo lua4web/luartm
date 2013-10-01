@@ -8,9 +8,7 @@ function client:__init(options)
 	options = options or {}
 	self.host = options.host or "127.0.0.1"
 	self.port = 7733
-	self.refser = refser.new{
-		doublecontext = true
-	}
+	self.refser = refser.new()
 	self.context = self.refser.context
 	self.table = {}
 	self.refser:save(self.table)
