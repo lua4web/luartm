@@ -43,21 +43,22 @@ function ptable:getfilecount()
 	end
 end
 
+function ptable:newindex(t, k, v)
+	rawset(t, k, v)
+	
+	if self.autoflushrate then	
+		self.counter = (self.counter + 1) % self.autoflushrate
+		if self.counter == 0 then
+			self:flush()
+		end
+	end
+end
+
 function ptable:setmts()
 	self.itemmt = {}
 	function self.itemmt.__newindex(t, k, v)
-		if not self.dontlog then
-			self:rawlog(self.refser:save(t, k, v))
-		end
-		
-		rawset(t, k, v)
-		
-		if self.autoflushrate then	
-			self.counter = (self.counter + 1) % self.autoflushrate
-			if self.counter == 0 then
-				self:flush()
-			end
-		end
+		self:rawlog(self.refser:save(t, k, v))
+		self:rawset(t, k, v)
 	end
 	
 	self.contextmt = {}

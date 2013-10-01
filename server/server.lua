@@ -32,7 +32,7 @@ end
 
 function server:handle(skt)
 	print("Accepted connetion...")
-
+	
 	local s
 	local ok, code, t, k, v
 	while true do
@@ -52,7 +52,7 @@ function server:handle(skt)
 				skt:send("\r\n")
 			elseif code == 2 then
 				self.ptable:rawlog(s:sub(3))
-				t[k] = v
+				self.ptable:newindex(t, k, v)
 				skt:send(self.refser:save(true))
 				skt:send("\r\n")
 			end
