@@ -9,7 +9,6 @@ function ptable:__init(options)
 	self.base = options.base or "ptable"
 	self.savesnapshots = options.savesnapshots
 	self.autoflushrate = options.autoflushrate
-	self.dontlog = options.dontlog
 	
 	self:getfilecount()
 	

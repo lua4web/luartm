@@ -12,10 +12,21 @@ function client:__init(options)
 	self.context = self.refser.context
 	self.table = {}
 	self.refser:save(self.table)
+	
+	self.itemmt = {}
+	function self.itemmt.__index(t, k)
+		local msg = self.refser:save(1, t, k)
+		self.socket:send(msg)
+		self.socket:send("\r\n")
+		return select(3, self.refser:load(self.socket:receive()))
+	end
+	
+	setmetatable(self.table, self.itemmt)
 end
 
 function client:connect()
 	self.socket = socket.connect(self.host, self.port)
+	self.refser.context.n = tonumber(self.socket:receive())
 end
 
 function client:disconnect()
@@ -24,6 +35,4 @@ function client:disconnect()
 	end
 end
 
-function client:index()
-
-function client
+return client
