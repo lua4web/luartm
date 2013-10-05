@@ -57,7 +57,7 @@ function ptable:setmts()
 	self.itemmt = {}
 	function self.itemmt.__newindex(t, k, v)
 		self:rawlog(self.refser:save(t, k, v))
-		self:rawset(t, k, v)
+		self:newindex(t, k, v)
 	end
 	
 	self.contextmt = {}

@@ -30,22 +30,22 @@ function Handler:getpeername()
 	return ("%s:%d"):format(self.socket:getpeername())
 end
 
-local server = class()
+local Server = class()
 
-function server:__init(options)
+function Server:__init(options)
 	self.options = options or {}
 	self.host = self.options.host or "127.0.0.1"
 	self.port = self.options.port or 7733
 end
 
-function server:boot()
+function Server:boot()
 	self.ptable = ptable(self.options)
 	self.table = self.ptable.table
 	self.refser = self.ptable.refser
 end
 
-function server:start()
-	self.server = socket.bind(self.host, self.port)
+function Server:start()
+	self.server = assert(socket.bind(self.host, self.port))
 	
 	local function handler(skt)
 		return self:handle(Handler(skt))
@@ -56,34 +56,76 @@ function server:start()
 	copas.loop()
 end
 
-function server:handshake(h)
+Server.commandlist = {
+	[1] = "index",
+	[2] = "newindex"
+}
+
+function Server:handshake(h)
 	-- send version?
 
 	h:send(tostring(self.refser.context.n))
 end
 
-function server:handle(h)
+function Server:execute(s)
+	local ok, code, a, b, c = self.refser:load(s)
+	
+	if not ok then
+		return false, code
+	end
+	
+	if not ((type(code) == "number") and (code == code)) then
+		return false, "opcode must be a number"
+	end
+	
+	if not self.commandlist[code] then
+		return false, "unknown opcode " .. code
+	end
+	
+	return self[self.commandlist[code]](self, s, a, b, c)
+end
+
+function Server:index(s, t, k)
+	if type(t) ~= "table" then
+		return false, "attempt to index nontable"
+	end
+	
+	if (k == nil) or (k ~= k) then
+		return false, "attempt to use nil or NaN as key"
+	end
+	
+	return true, t[k]
+end
+
+function Server:newindex(s, t, k, v)
+	if type(t) ~= "table" then
+		return false, "attempt to index nontable"
+	end
+	
+	if (k == nil) or (k ~= k) then
+		return false, "attempt to use nil or NaN as key"
+	end
+	
+	self.ptable:rawlog(s:sub(3))
+	self.ptable:newindex(t, k, v)
+	
+	return true
+end
+
+function Server:handle(h)
 	print("Accepted connection from " .. (h:getpeername()))
 	
 	self:handshake(h)
 	
 	local s
-	local ok, code, t, k, v
+	local ok, a, b
 	while true do
 		s = h:receive()
 		if s then
-			ok, code, t, k, v = self.refser:load(s)
+			ok, a, b = self:execute(s)
+			h:send(self.refser:save(ok, a, b))
 			if not ok then
-				h:send(code)
 				break
-			end
-			
-			if code == 1 then
-				h:send(self.refser:save(true, t[k]))
-			elseif code == 2 then
-				self.ptable:rawlog(s:sub(3))
-				self.ptable:newindex(t, k, v)
-				h:send(self.refser:save(true))
 			end
 		else
 			break
@@ -93,4 +135,4 @@ function server:handle(h)
 	print("Closed connection.")
 end
 
-return server
+return Server

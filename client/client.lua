@@ -21,7 +21,26 @@ function client:__init(options)
 		return select(3, self.refser:load(self.socket:receive()))
 	end
 	
+	function self.itemmt.__newindex(t, k, v)
+		local msg = self.refser:save(2, t, k, v)
+		self.socket:send(msg)
+		self.socket:send("\r\n")
+		self.socket:receive()
+	end
+	
+	self.contextmt = {}
+	function self.contextmt.__index(t, k)
+		if type(k) == "number" then
+			local newtable = {}
+			setmetatable(newtable, self.itemmt)
+			rawset(t, k, newtable)
+			rawset(t, newtable, k)
+			return newtable
+		end
+	end
+	
 	setmetatable(self.table, self.itemmt)
+	setmetatable(self.context, self.contextmt)
 end
 
 function client:connect()
