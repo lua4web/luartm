@@ -48,6 +48,11 @@ function client:connect()
 	self.refser.context.n = tonumber(self.socket:receive())
 end
 
+function client:flush()
+	self.socket:send("D3\r\n")
+	self.socket:receive()
+end
+
 function client:disconnect()
 	if self.socket then
 		self.socket:close()

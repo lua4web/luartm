@@ -7,5 +7,4 @@ h:connect()
 
 local t = h.table
 
-t[6] = {}
-t[7] = t[6]
+h:flush()
