@@ -6,8 +6,6 @@ local server = Server()
 
 server:boot()
 
-server.table[1] = server.table.baz
-
 print "== TABLE =="
 for k, v in pairs(server.table) do
 	print(k, v)

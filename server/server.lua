@@ -58,7 +58,8 @@ end
 
 Server.commandlist = {
 	[1] = "index",
-	[2] = "newindex"
+	[2] = "newindex",
+	[3] = "flush"
 }
 
 function Server:handshake(h)
@@ -108,6 +109,12 @@ function Server:newindex(s, t, k, v)
 	
 	self.ptable:rawlog(s:sub(3))
 	self.ptable:newindex(t, k, v)
+	
+	return true
+end
+
+function Server:flush()
+	self.ptable:flush()
 	
 	return true
 end
