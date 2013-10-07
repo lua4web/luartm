@@ -39,6 +39,21 @@ function client:__init(options)
 		end
 	end
 	
+	function self.contextmt.__newindex(t, k, v)
+		local newtable
+		if type(k) == "table" then
+			newtable = k
+		elseif type(v) == "table" then
+			newtable = v
+		end
+		
+		if newtable then
+			setmetatable(newtable, self.itemmt)
+		end
+		
+		rawset(t, k, v)
+	end
+	
 	setmetatable(self.table, self.itemmt)
 	setmetatable(self.context, self.contextmt)
 end

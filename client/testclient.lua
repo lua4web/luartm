@@ -7,4 +7,5 @@ h:connect()
 
 local t = h.table
 
-h:flush()
+t.foo.bar = {}
+t.foo.bar.baz = {}
