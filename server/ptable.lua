@@ -23,7 +23,7 @@ function ptable:boot()
 	
 	if not readhandler then
 		self.table = {}
-		self.refser:save(self.table)
+		self:flush()
 	else
 		local snapshot = readhandler:read()
 		local ok
@@ -55,6 +55,7 @@ end
 function ptable:flush()
 	if self.appendhandler then
 		self.appendhandler:close()
+		self.appendhandler = nil
 	end
 	
 	self:resetcontext()
