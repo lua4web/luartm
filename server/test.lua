@@ -4,8 +4,6 @@ local Server = require "server"
 
 local server = Server()
 
-server:boot()
-
 print "== TABLE =="
 for k, v in pairs(server.table) do
 	print(k, v)
@@ -18,8 +16,6 @@ for k, v in pairs(server.refser.context) do
 end
 print()
 
-
-
-server.ptable:flush()
+server:flush()
 
 server:start()

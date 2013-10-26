@@ -36,10 +36,9 @@ function Server:__init(options)
 	self.options = options or {}
 	self.host = self.options.host or "127.0.0.1"
 	self.port = self.options.port or 7733
-end
-
-function Server:boot()
-	self.ptable = ptable(self.options)
+	self.filename = self.options.filename
+	
+	self.ptable = ptable(self.filename)
 	self.table = self.ptable.table
 	self.refser = self.ptable.refser
 end
@@ -107,8 +106,8 @@ function Server:newindex(s, t, k, v)
 		return false, "attempt to use nil or NaN as key"
 	end
 	
-	self.ptable:rawlog(s:sub(3))
-	self.ptable:newindex(t, k, v)
+	self.ptable:log(s:sub(3))
+	t[k] = v
 	
 	return true
 end

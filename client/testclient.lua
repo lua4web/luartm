@@ -7,5 +7,4 @@ h:connect()
 
 local t = h.table
 
-t.foo.bar = {}
-t.foo.bar.baz = {}
+print(t[1])

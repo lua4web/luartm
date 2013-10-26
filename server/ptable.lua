@@ -1,101 +1,35 @@
-local lfs = require "lfs"
-local stringx = require "pl.stringx"
 local class = require "30log"
 local refser = require "refser"
 
 local ptable = class()
 
-function ptable:__init(options)
-	self.base = options.base or "ptable"
-	self.savesnapshots = options.savesnapshots
-	self.autoflushrate = options.autoflushrate
-	
-	self:getfilecount()
-	
-	self:setmts()
-	
+function ptable:__init(filename)
+	self.filename = filename or "ptable"
+	self.tempfilename = self.filename .. "~"
 	self.refser = refser.new()
-	self:resetcontext()
-	
-	self.counter = 0
-	
 	self:boot()
-	
-	self.handler = self:open "a"
-end
-
-function ptable:getfilecount()
-	self.filecount = 0
-	local id
-	for filename in lfs.dir(".") do
-		if lfs.attributes(filename, "mode") == "file" then
-			if stringx.startswith(filename, self.base) then
-				id = filename:sub(#self.base + 1)
-				if stringx.isdigit(id) then
-					id = tonumber(id)
-					if id > self.filecount then
-						self.filecount = id
-					end
-				end
-			end
-		end
-	end
-end
-
-function ptable:newindex(t, k, v)
-	rawset(t, k, v)
-	
-	if self.autoflushrate then	
-		self.counter = (self.counter + 1) % self.autoflushrate
-		if self.counter == 0 then
-			self:flush()
-		end
-	end
-end
-
-function ptable:setmts()
-	self.itemmt = {}
-	function self.itemmt.__newindex(t, k, v)
-		self:rawlog(self.refser:save(t, k, v))
-		self:newindex(t, k, v)
-	end
-	
-	self.contextmt = {}
-	function self.contextmt.__newindex(t, k, v)
-		local newtable
-		if type(k) == "table" then
-			newtable = k
-		elseif type(v) == "table" then
-			newtable = v
-		end
-		
-		if newtable then
-			setmetatable(newtable, self.itemmt)
-		end
-		
-		rawset(t, k, v)
-	end
 end
 
 function ptable:resetcontext()
-	self.refser:setcontext(setmetatable({}, self.contextmt))
+	if self.refser.context.n > 0 then
+		self.refser:setcontext({})
+	end
 end
 
 function ptable:boot()
-	local readhandler = self:open "r"
+	self:resetcontext()
+	
+	local readhandler = io.open(self.filename, "r")
 	
 	if not readhandler then
 		self.table = {}
-		self:flush()
+		self.refser:save(self.table)
 	else
 		local snapshot = readhandler:read()
 		local ok
 		ok, self.table = self.refser:load(snapshot)
 		
-		if not ok then
-			self.filecount = self.filecount - 1
-			return self:boot()
-		end
+		assert(ok, "failed to load snapshot from " .. self.filename)
 		
 		local entry, ok, t, k, v
 		while true do
@@ -106,8 +40,8 @@ function ptable:boot()
 				ok, t, k, v = self.refser:load(entry)
 				
 				if ok ~= 3 then
-					self.filecount = self.filecount - 1
-					return self:flush()
+					self:flush()
+					break
 				end
 				
 				rawset(t, k, v)
@@ -117,34 +51,28 @@ function ptable:boot()
 		readhandler:close()
 	end
 end
-	
 
 function ptable:flush()
-	self.filecount = self.filecount + 1
+	if self.appendhandler then
+		self.appendhandler:close()
+	end
+	
 	self:resetcontext()
 	
-	local writehandler = self:open "w"
+	local writehandler = io.open(self.tempfilename, "w")
 	writehandler:write(self.refser:save(self.table), "\n")
 	writehandler:close()
 	
-	if self.handler then
-		self.handler:close()
-	end
-	
-	if not self.savesnapshots then
-		os.remove(self.base .. (self.filecount - 1))
-	end
-	
-	self.handler = self:open "a"
+	os.rename(self.tempfilename, self.filename)
 end
 
-function ptable:open(mode)
-	return io.open(self.base .. self.filecount, mode)
-end
-
-function ptable:rawlog(s)
-	self.handler:write(s, "\n")
-	self.handler:flush()
+function ptable:log(s)
+	if not self.appendhandler then
+		self.appendhandler = io.open(self.filename, "a")
+	end
+	
+	self.appendhandler:write(s, "\n")
+	self.appendhandler:flush()
 end
 
 return ptable
