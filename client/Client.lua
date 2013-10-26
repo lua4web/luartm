@@ -1,9 +1,9 @@
-local client = require "client"
+local ClientCore = require "ClientCore"
 
-local wrapper = client:extends()
-wrapper.__name = "luartm client wrapper"
+local Client = ClientCore:extends()
+Client.__name = "luartm client wrapper"
 
-function wrapper:__init(options)
+function Client:__init(options)
 	self.super.__init(self, options)
 	
 	self.itemmt = {}
@@ -45,9 +45,9 @@ function wrapper:__init(options)
 	setmetatable(self.refser.context, self.contextmt)
 end
 
-function wrapper:connect()
+function Client:connect()
 	self.super.connect(self)
 	self.refser.context.n = self:gettop()
 end
 
-return wrapper
+return Client

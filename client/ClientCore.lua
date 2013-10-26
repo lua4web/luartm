@@ -2,10 +2,10 @@ local class = require "30log"
 local socket = require "socket"
 local refser = require "refser"
 
-local client = class()
-client.__name = "luartm client"
+local ClientCore = class()
+ClientCore.__name = "luartm client"
 
-function client:__init(options)
+function ClientCore:__init(options)
 	options = options or {}
 	self.host = options.host or "127.0.0.1"
 	self.port = 7733
@@ -14,18 +14,18 @@ function client:__init(options)
 	self.refser:save(self.table)
 end
 
-client.commandlist = {
+ClientCore.commandlist = {
 	index = 1,
 	newindex = 2,
 	flush = 3,
 	gettop = 4
 }
 
-function client:connect()
+function ClientCore:connect()
 	self.socket = assert(socket.connect(self.host, self.port))
 end
 
-function client:execute(...)
+function ClientCore:execute(...)
 	local request = assert(self.refser:save(...))
 	assert(self.socket:send(request .. "\r\n"))
 	local responce = assert(self.socket:receive())
@@ -34,26 +34,26 @@ function client:execute(...)
 	return table.unpack(responce_tuple, 3, responce_tuple[1] + 1)
 end
 
-function client:index(t, k)
+function ClientCore:index(t, k)
 	return self:execute(self.commandlist.index, t, k)
 end
 
-function client:newindex(t, k, v)
+function ClientCore:newindex(t, k, v)
 	return self:execute(self.commandlist.newindex, t, k, v)
 end
 
-function client:flush()
+function ClientCore:flush()
 	return self:execute(self.commandlist.flush)
 end
 
-function client:gettop()
+function ClientCore:gettop()
 	return self:execute(self.commandlist.gettop)
 end
 
-function client:disconnect()
+function ClientCore:close()
 	if self.socket then
 		self.socket:close()
 	end
 end
 
-return client
+return ClientCore

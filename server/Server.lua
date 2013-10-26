@@ -3,6 +3,7 @@ local ptable = require "ptable"
 local socket = require "socket"
 local copas = require "copas"
 
+local Server = class()
 
 local Handler = class()
 
@@ -12,7 +13,9 @@ function Handler:__init(socket)
 end
 
 function Handler:send(s)
-	print("Sending " .. s)
+	if Server.debug then
+		print("Sending " .. s)
+	end
 	
 	copas.send(self.socket, s .. "\r\n")
 end
@@ -20,14 +23,16 @@ end
 function Handler:receive()
 	local s = copas.receive(self.socket)
 	
-	if s then
-		print("Received " .. s)
+	if Server.debug then
+		if s then
+			print("Received " .. s)
+		end
 	end
 	
 	return s
 end
 
-local Server = class()
+Server.debug = false
 
 function Server:__init(options)
 	self.options = options or {}
@@ -115,7 +120,9 @@ function Server:flush()
 end
 
 function Server:handle(h)
-	print("Accepted connection from " .. h.host .. ":" .. h.port)
+	if Server.debug then
+		print("Accepted connection from " .. h.host .. ":" .. h.port)
+	end
 	
 	local s
 	local ok, a, b
@@ -132,7 +139,9 @@ function Server:handle(h)
 		end
 	end
 	
-	print("Closed connection.")
+	if Server.debug then
+		print("Closed connection.")
+	end
 end
 
 return Server
