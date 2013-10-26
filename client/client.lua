@@ -3,71 +3,51 @@ local socket = require "socket"
 local refser = require "refser"
 
 local client = class()
+client.__name = "luartm client"
 
 function client:__init(options)
 	options = options or {}
 	self.host = options.host or "127.0.0.1"
 	self.port = 7733
 	self.refser = refser.new()
-	self.context = self.refser.context
 	self.table = {}
 	self.refser:save(self.table)
-	
-	self.itemmt = {}
-	function self.itemmt.__index(t, k)
-		local msg = self.refser:save(1, t, k)
-		self.socket:send(msg)
-		self.socket:send("\r\n")
-		return select(3, self.refser:load(self.socket:receive()))
-	end
-	
-	function self.itemmt.__newindex(t, k, v)
-		local msg = self.refser:save(2, t, k, v)
-		self.socket:send(msg)
-		self.socket:send("\r\n")
-		self.socket:receive()
-	end
-	
-	self.contextmt = {}
-	function self.contextmt.__index(t, k)
-		if type(k) == "number" then
-			local newtable = {}
-			setmetatable(newtable, self.itemmt)
-			rawset(t, k, newtable)
-			rawset(t, newtable, k)
-			return newtable
-		end
-	end
-	
-	function self.contextmt.__newindex(t, k, v)
-		local newtable
-		if type(k) == "table" then
-			newtable = k
-		elseif type(v) == "table" then
-			newtable = v
-		end
-		
-		if newtable then
-			setmetatable(newtable, self.itemmt)
-		end
-		
-		rawset(t, k, v)
-	end
-	
-	setmetatable(self.table, self.itemmt)
-	setmetatable(self.context, self.contextmt)
 end
 
+client.commandlist = {
+	index = 1,
+	newindex = 2,
+	flush = 3,
+	gettop = 4
+}
+
 function client:connect()
-	self.socket = socket.connect(self.host, self.port)
-	
-	self.socket:send("D4\r\n")
-	self.refser.context.n = select(3, self.refser:load(self.socket:receive()))
+	self.socket = assert(socket.connect(self.host, self.port))
+end
+
+function client:execute(...)
+	local request = assert(self.refser:save(...))
+	assert(self.socket:send(request .. "\r\n"))
+	local responce = assert(self.socket:receive())
+	local responce_tuple = table.pack(assert(self.refser:load(responce)))
+	assert(responce_tuple[2], responce_tuple[3])
+	return table.unpack(responce_tuple, 3, responce_tuple[1] + 1)
+end
+
+function client:index(t, k)
+	return self:execute(self.commandlist.index, t, k)
+end
+
+function client:newindex(t, k, v)
+	return self:execute(self.commandlist.newindex, t, k, v)
 end
 
 function client:flush()
-	self.socket:send("D3\r\n")
-	self.socket:receive()
+	return self:execute(self.commandlist.flush)
+end
+
+function client:gettop()
+	return self:execute(self.commandlist.gettop)
 end
 
 function client:disconnect()

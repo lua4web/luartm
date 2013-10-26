@@ -1,5 +1,3 @@
-local serpent = require "serpent"
-
 local Server = require "server"
 
 local server = Server()
