@@ -8,6 +8,7 @@ local Handler = class()
 
 function Handler:__init(socket)
 	self.socket = socket
+	self.host, self.port = socket:getpeername()
 end
 
 function Handler:send(s)
@@ -24,10 +25,6 @@ function Handler:receive()
 	end
 	
 	return s
-end
-
-function Handler:getpeername()
-	return ("%s:%d"):format(self.socket:getpeername())
 end
 
 local Server = class()
@@ -58,13 +55,12 @@ end
 Server.commandlist = {
 	[1] = "index",
 	[2] = "newindex",
-	[3] = "flush"
+	[3] = "flush",
+	[4] = "gettop"
 }
 
-function Server:handshake(h)
-	-- send version?
-
-	h:send(tostring(self.refser.context.n))
+function Server:gettop()
+	return true, self.refser.context.n
 end
 
 function Server:execute(s)
@@ -119,9 +115,7 @@ function Server:flush()
 end
 
 function Server:handle(h)
-	print("Accepted connection from " .. (h:getpeername()))
-	
-	self:handshake(h)
+	print("Accepted connection from " .. h.host .. ":" .. h.port)
 	
 	local s
 	local ok, a, b

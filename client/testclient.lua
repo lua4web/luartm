@@ -7,4 +7,3 @@ h:connect()
 
 local t = h.table
 
-print(t[1])

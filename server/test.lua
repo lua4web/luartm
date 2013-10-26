@@ -16,6 +16,4 @@ for k, v in pairs(server.refser.context) do
 end
 print()
 
-server:flush()
-
 server:start()

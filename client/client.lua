@@ -60,7 +60,9 @@ end
 
 function client:connect()
 	self.socket = socket.connect(self.host, self.port)
-	self.refser.context.n = tonumber(self.socket:receive())
+	
+	self.socket:send("D4\r\n")
+	self.refser.context.n = select(3, self.refser:load(self.socket:receive()))
 end
 
 function client:flush()
